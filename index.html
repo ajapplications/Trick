@@ -80,6 +80,8 @@
             align-items: center;
             text-align: center;
             transition: opacity 1s ease;
+            /* Added for the clickable area */
+            cursor: pointer; 
         }
 
         .subtitle-text {
@@ -89,6 +91,7 @@
             min-height: 3rem;
             text-shadow: 0 0 10px var(--primary);
             margin-bottom: 20px;
+            pointer-events: none; /* Ensure clicks go to the overlay container */
         }
 
         .loader-bar {
@@ -96,6 +99,7 @@
             height: 2px;
             background: #333;
             position: relative;
+            pointer-events: none;
         }
         .loader-progress {
             position: absolute;
@@ -226,7 +230,7 @@
             height: 100%;
             background: var(--primary);
             width: 0%;
-            animation: fillBar 1.5s forwards 12s; /* Delay animation until after intro */
+            animation: fillBar 1.5s forwards 12s;
         }
 
         @keyframes fillBar { to { width: 98%; } }
@@ -334,49 +338,62 @@
         const fullChineseSpeech = "警告，目标锁定。人物：谢里夫。正在为家人建造新居。死亡时间：2026年3月21日下午2点。倒计时开始。";
         const totalIntroDuration = 9000; // ms
 
-        // --- 2. RUN INTRO ---
+        // --- 2. RUN INTRO (MODIFIED FOR BROWSER SUPPORT) ---
         window.onload = function() {
             const overlay = document.getElementById('introOverlay');
             const textEl = document.getElementById('introText');
             const loader = document.getElementById('loader');
             const mainContent = document.getElementById('mainContent');
 
-            // Update Loader
-            loader.style.width = "100%";
-            loader.style.transition = `width ${totalIntroDuration}ms linear`;
+            // 1. Change initial text to prompt a click
+            textEl.innerText = "CLICK TO INITIALIZE";
+            textEl.style.cursor = "pointer"; // Show hand cursor
+            textEl.classList.add("blink");   // Make it blink (optional, uses your existing css)
 
-            // Play 
-let currentUtterance = null;
+            // 2. Wrap the entire sequence in a click event
+            overlay.addEventListener('click', function() {
+                
+                // Remove the click listener so it doesn't fire twice
+                overlay.style.pointerEvents = "none"; 
+                
+                // Start the audio NOW (allowed because it's inside a click)
+                playAudio();
 
-function playAudio() {
-    if ('speechSynthesis' in window) {
-        // Cancel any currently speaking audio to prevent overlap
-        window.speechSynthesis.cancel();
+                // Start the visual loading bar
+                loader.style.width = "100%";
+                loader.style.transition = `width ${totalIntroDuration}ms linear`;
 
-        currentUtterance = new SpeechSynthesisUtterance(fullChineseSpeech);
-        currentUtterance.lang = 'zh-CN';
-        currentUtterance.rate = 0.9;
-        currentUtterance.pitch = 0.8;
+                // Loop through subtitles
+                introText.forEach(item => {
+                    setTimeout(() => {
+                        textEl.innerText = item.text;
+                        textEl.classList.remove("blink"); // Stop blinking once text changes
+                    }, item.time);
+                });
 
-
-
-        window.speechSynthesis.speak(currentUtterance);
-            // Loop through subtitles
-            introText.forEach(item => {
+                // End Intro & Show Page
                 setTimeout(() => {
-                    textEl.innerText = item.text;
-                }, item.time);
-            });
+                    overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        mainContent.style.opacity = '1';
+                        mainContent.style.transform = 'scale(1)';
+                    }, 1000);
+                }, totalIntroDuration);
 
-            // End Intro & Show Page
-            setTimeout(() => {
-                overlay.style.opacity = '0';
-                setTimeout(() => {
-                    overlay.style.display = 'none';
-                    mainContent.style.opacity = '1';
-                    mainContent.style.transform = 'scale(1)';
-                }, 1000);
-            }, totalIntroDuration);
+            }, { once: true }); // Ensure it only runs once
+
+            // Audio Function Definition (Keep this as is)
+            function playAudio() {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    let currentUtterance = new SpeechSynthesisUtterance(fullChineseSpeech);
+                    currentUtterance.lang = 'zh-CN';
+                    currentUtterance.rate = 0.9;
+                    currentUtterance.pitch = 0.8;
+                    window.speechSynthesis.speak(currentUtterance);
+                }
+            }
         };
 
         // --- 3. COUNTDOWN LOGIC ---
