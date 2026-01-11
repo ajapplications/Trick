@@ -292,7 +292,7 @@
             <div class="info-card location-card">
                 <h4><i class="fas fa-home"></i> Current Status</h4>
                 <p>Nellikkate, Ethirthode, Kasaragod</p>
-                <small style="color: var(--primary);">Building new house for family</small>
+                <small style="color: var(--primary);">Planning to Start Skin care Brand</small>
             </div>
             <div class="info-card">
                 <h4><i class="fas fa-briefcase"></i> Operation</h4>
@@ -300,8 +300,8 @@
                 <small style="color: #666;">Export / Import</small>
             </div>
             <div class="info-card">
-                <h4><i class="fas fa-map-marker-alt"></i> Previous Base</h4>
-                <p>Piccalilli, Kasaragod</p>
+                <h4><i class="fas fa-map-marker-alt"></i> Previous Place</h4>
+                <p>Povval, Kasaragod</p>
             </div>
             <div class="info-card">
                 <h4><i class="fab fa-instagram"></i> Signal</h4>
@@ -326,7 +326,7 @@
         const introText = [
             { time: 0, text: "警告，目标锁定" }, // Warning, target locked
             { time: 1500, text: "人物：谢里夫" }, // Subject: Shareef
-            { time: 3000, text: "正在为家人建造新居" }, // Building new house for family
+            // Building new house for family
             { time: 5000, text: "死亡时间：2026年3月21日" }, // Death time...
             { time: 7500, text: "倒计时开始..." } // Countdown begins...
         ];
@@ -345,15 +345,22 @@
             loader.style.width = "100%";
             loader.style.transition = `width ${totalIntroDuration}ms linear`;
 
-            // Play Audio
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(fullChineseSpeech);
-                utterance.lang = 'zh-CN';
-                utterance.rate = 0.9;
-                utterance.pitch = 0.8;
-                window.speechSynthesis.speak(utterance);
-            }
+            // Play 
+let currentUtterance = null;
 
+function playAudio() {
+    if ('speechSynthesis' in window) {
+        // Cancel any currently speaking audio to prevent overlap
+        window.speechSynthesis.cancel();
+
+        currentUtterance = new SpeechSynthesisUtterance(fullChineseSpeech);
+        currentUtterance.lang = 'zh-CN';
+        currentUtterance.rate = 0.9;
+        currentUtterance.pitch = 0.8;
+
+
+
+        window.speechSynthesis.speak(currentUtterance);
             // Loop through subtitles
             introText.forEach(item => {
                 setTimeout(() => {
